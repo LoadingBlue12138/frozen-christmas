@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎄Frozen Christmas</title>
+    <style>
+        /* 全局滚动与底色设置 */
+       html {
+            background-color: #141416; /* 让底色只属于最外层的 html */
+            }
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            height: auto;
+            font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft YaHei", sans-serif;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+                    }
+
+        /* 【新改动】专属背景图层：单独控制背景图的透明度，完全不影响文字 */
+        html::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('background.png'); 
+            background-size: cover;
+            background-position: center;
+            /* 这里控制背景的透明度：0.55 代表 55% 的不透明度 */
+            /* 你可以根据喜好自由调整，数值越小背景越透明、越暗 */
+            opacity: 0.55; 
+            z-index: -1; /* 确保背影乖乖待在内容的最底层 */
+        }
+
+        /* 剧本总容器 */
+        #story-container {
+            width: 90%;
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 40px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-sizing: border-box;
+        }
+
+        /* 单条对话的整行布局 */
+        .message-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+
+        /* 【新改动】头像样式：去掉了白框，增加了背景不重复，完美包容各种尺寸的图片 */
+        .avatar-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            /* 保留了淡淡的阴影，让无框头像在背景上依然有立体感 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25); 
+            flex-shrink: 0; 
+            margin-right: 20px;
+        }
+
+        /* 对话框通用样式 */
+        .dialogue-box {
+            flex-grow: 1;
+            padding: 16px 24px;
+            border-radius: 18px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px); 
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        /* 旁白整行样式 */
+        .message-row.narrator-row {
+            justify-content: center;
+        }
+        
+        .message-row.narrator-row .dialogue-box {
+            width: 100%;
+        }
+
+        /* 名字标签 */
+        .speaker-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: block;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
+
+        /* 文本内容 */
+        .text-content {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* 新行登场的渐入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 移动端适配层 */
+        @media (max-width: 600px) {
+            #story-container {
+                padding: 20px 0;
+                gap: 16px;
+            }
+            .avatar-box {
+                width: 58px; 
+                height: 58px;
+                margin-right: 12px;
+            }
+            .dialogue-box {
+                padding: 12px 18px;
+                border-radius: 14px;
+            }
+            .text-content {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="story-container"></div>
+
+    <script>
+        // 核心故事文本数据
+        const storyData = [
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '这已经是我第八次复活了，真不敢想象回到现实以后，八个死亡事件蓄积的生理痛是什么级别……' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '现实世界，指的是尸箱吗？' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '可以不要再把我生活的空间叫做“尸箱”了吗，听起来很过分……' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '这个定义的产生，是因为红港发现，肉体可以为意识提供稳定的场。'},
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text:'但同时，肉体也限制了意志的自由。'},
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text:'在维度更广的意识阈限里，被肉体束缚的意识同无意识的区别不大。'},
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text:'也就是说，所谓的现实世界，只不过是色彩斑斓的停尸房……' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '……而且那色彩还是伪造的，有限的。我已经背下来了，只不过对我这种和尸体一般无二的现实生命来讲，没什么教育意义吧。' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '是的！是这样！' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '（她好像不理解反讽的意思，算了……）' },
+            { type: 'narrator', text: '（只有两人的）超现实俱乐部又抵达了那片扇区。雪景一样的水泥废墟让世奕想到了荒凉的圣诞夜，但为了避免盈得出破坏气氛的结论，他没有讲出自己的所思所感。' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '找到袭击者的坐标，先下手为强如何？' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '总觉得这句话重复过了……' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '因为她的坐标真的很难确认嘛！似乎是使用了某种防爬系统。' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '！' },
+            { type: 'narrator', text: '红色狐狸一样的女孩再次从废墟中闪现，对着世奕扬起色调暗沉的枪口，但她并没有像此前的八次突袭一样迅速地扣下扳机，低反射玻璃般半透明的黑色眼瞳从瞄准镜里紧盯着他。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '为什么你的尸体没有被死神回收？' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '（呃，呃？宗教内容……）' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '我不明白你的意思。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '……' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '看看那边。' },
+            { type: 'narrator', text: '圣诞花环一样的女孩抬起手指，世奕感到她从自己的双眼中扯出了两束无形的光线，她的手指牵引着光照的方向，即指引着他的视线，让世奕和盈见到了什么可怕的东西……' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '这是……这是我的尸体？上面那些密密麻麻在动的东西是什么……' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '是瓢虫监视子，但我额外赋予了它们分解缓存垃圾的功能。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '在脑城中，死亡事件生产的缓存垃圾，会被“死神”脚本回收。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '瓢虫能够标记缓存垃圾，唤醒死神。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '在你之前，我的瓢虫从没有遇上过无法唤醒死神的垃圾数据块。' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '垃圾数据块这种话也太伤人了……那是我的尸体，请尊重尸体……' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '我想，如果她对现实世界没有认知，那对她来讲那就是无用的缓存垃圾……' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '你是谁？我刚才似乎没有见到你。' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '那是因为你没来得及观察周围的环境，就射杀了他的缘故吧。' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '这个是我的幻觉。' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '我不是世奕的幻觉！硬要说的话，我是大家的幻觉。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '大家的幻觉，也包括我的吗？' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '是的！' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '我不喜欢产生幻觉，能让她消失吗？' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '这个……我想她既然说自己是大家的幻觉，那需要所有人都永不进入致幻状态才可以吧。' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '那太残忍了！请不要。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '所以那样的话，你真的会消失吗？' },
+            { type: 'char', role: 'B', name: '盈（ID：切角蛋糕）', text: '不会哦。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '那有什么可紧张的啊！' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '总之，请不要对我使用暴力了。我们可以友好交流一下，我们希望修复脑城的损毁扇区……' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '我可没有使用暴力。我认为暴力是一种对身体造成伤害的攻击性行为。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '但你位于脑城，我不会对你的肉体造成损害。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '而我采取的也是一种自卫行动，更接近防御措施。' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '所以，我不认为我对你使用了暴力。' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '（八次死亡蓄积的生理痛叠加在一起，感觉注射十几管吗啡都压不住啊……）' },
+            { type: 'char', role: 'A', name: '世奕（ID：网上邻居）', text: '（（虽然药物起效依靠的不是药量，而且和她说这些感觉也没用……）' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '等等……' },
+            { type: 'char', role: 'C', name: '未知（ID：浆果）', text: '你刚才说，你们要修复脑城的损毁扇区？' }
+        ];
+
+        // 颜色配置
+        const styleConfig = {
+            'A': { bg: '#474747', color: '#ffffff' },
+            'B': { bg: '#fae3f2', color: '#382230' },
+            'C': { bg: '#e64e51', color: '#ffffff' },
+            'narrator': { bg: 'rgba(0, 0, 0, 0.6)', color: '#ececec' }
+        };
+
+        let currentIndex = 0; 
+        const container = document.getElementById('story-container');
+
+        function renderLine(index) {
+            if (index >= storyData.length) return;
+            const currentStory = storyData[index];
+            
+            const row = document.createElement('div');
+            row.className = 'message-row';
+            
+            if (currentStory.type === 'char') {
+                row.classList.add('char-row');
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar-box';
+                avatar.style.backgroundImage = `url('${currentStory.role}.png')`;
+                row.appendChild(avatar);
+                
+                const box = document.createElement('div');
+                box.className = 'dialogue-box';
+                const cfg = styleConfig[currentStory.role];
+                box.style.backgroundColor = cfg.bg;
+                box.style.color = cfg.color;
+                
+                const name = document.createElement('span');
+                name.className = 'speaker-name';
+                name.innerText = currentStory.name;
+                box.appendChild(name);
+                
+                const text = document.createElement('span');
+                text.className = 'text-content';
+                text.innerText = currentStory.text;
+                box.appendChild(text);
+                
+                row.appendChild(box);
+            } else {
+                row.classList.add('narrator-row');
+                
+                const box = document.createElement('div');
+                box.className = 'dialogue-box';
+                const cfg = styleConfig['narrator'];
+                box.style.backgroundColor = cfg.bg;
+                box.style.color = cfg.color;
+                
+                const text = document.createElement('span');
+                text.className = 'text-content';
+                text.innerText = currentStory.text;
+                box.appendChild(text);
+                
+                row.appendChild(box);
+            }
+            
+            container.appendChild(row);
+            
+            setTimeout(() => {
+                window.scrollTo({
+                    top: document.documentElement.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 50);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderLine(currentIndex);
+        });
+
+        document.addEventListener('click', () => {
+            if (currentIndex < storyData.length - 1) {
+                currentIndex++;
+                renderLine(currentIndex);
+            }
+        });
+    </script>
+</body>
+</html>
